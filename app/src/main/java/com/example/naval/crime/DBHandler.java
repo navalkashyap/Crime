@@ -70,7 +70,6 @@ public class DBHandler extends SQLiteOpenHelper {
     public boolean clearIncidentTable() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete(TABLE_PRODUCTS,null,null);
-//        db.delete(TABLE_PRODUCTS, "_id = ? ",new String[] {Integer.toString(id)});
         return true;
     }
 
