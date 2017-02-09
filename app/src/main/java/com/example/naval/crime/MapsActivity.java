@@ -1,7 +1,12 @@
 package com.example.naval.crime;
 
+
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -69,6 +74,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void createDB() {
         myDB = new DBHandler(this);
+        ArrayList<String> allIncidents = myDB.getAllIncidents();
+        if(allIncidents.size() != 0)
+            return;
         myDB.clearIncidentTable();
         double lat = 47.7136844;
         double lng = -122.2074087;
@@ -269,6 +277,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return true;
     }
 
+    public void show_notification() {
+        Intent intent = new Intent();
+        PendingIntent pIntent = PendingIntent.getActivity(MapsActivity.this,0,intent,0);
+        Notification noti = new Notification.Builder(MapsActivity.this)
+                .setTicker("TickerTitle")
+                .setContentTitle("Warning!")
+                .setContentText("You have reached a crime-prone area.Please be cautious!")
+                .setSmallIcon(R.drawable.crimealert)
+                .setContentIntent(pIntent).getNotification();
+        noti.flags = Notification.FLAG_AUTO_CANCEL;
+        NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        nm.notify(0,noti);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -278,6 +300,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 break;
             case R.id.action_mapType:
                 changeMapType();
+                break;
+            case R.id.show_notification:
+                show_notification();
                 break;
         }
         return super.onOptionsItemSelected(item);

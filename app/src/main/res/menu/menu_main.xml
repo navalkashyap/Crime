@@ -20,4 +20,9 @@
         android:orderInCategory="100"
         app:showAsAction="never"/>
 
+    <item android:id="@+id/show_notification"
+        android:title="Show Notification"
+        android:orderInCategory="100"
+        app:showAsAction="never"/>
+
 </menu>
