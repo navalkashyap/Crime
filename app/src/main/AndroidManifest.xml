@@ -12,7 +12,7 @@
     <application
         android:allowBackup="true"
         android:icon="@drawable/crimealert"
-        android:label= "@string/app_name"
+        android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
@@ -37,6 +37,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings" />
+        <activity android:name=".callAPI"></activity>
     </application>
 
 </manifest>

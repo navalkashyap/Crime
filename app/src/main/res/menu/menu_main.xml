@@ -21,7 +21,7 @@
         app:showAsAction="never"/>
 
     <item android:id="@+id/show_notification"
-        android:title="Show Notification"
+        android:title="Show Notification(Demo Only)"
         android:orderInCategory="100"
         app:showAsAction="never"/>
 

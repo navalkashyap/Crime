@@ -13,6 +13,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -25,6 +26,7 @@ import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -35,9 +37,21 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -49,10 +63,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     DBHandler myDB;
     crime_incident incident_;
-    LatLng currentLatlng = null;
+    public LatLng currentLatlng = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         createDB();
         setContentView(R.layout.activity_maps);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -86,7 +102,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             double x = (rand.nextDouble() * 2 - 1)*0.5;
             double y = (rand.nextDouble() * 2 - 1)*0.5;
             incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-            myDB.insertIncident(incident_);
+//            myDB.insertIncident(incident_);
         }
         loc = "Bothell";
         lat = 47.759497;
@@ -96,7 +112,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             double x = (rand.nextDouble() * 2 - 1)*0.03;
             double y = (rand.nextDouble() * 2 - 1)*0.03;
             incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-            myDB.insertIncident(incident_);
+//            myDB.insertIncident(incident_);
         }
 
         loc = "Seattle";
@@ -107,7 +123,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             double x = (rand.nextDouble() * 2 - 1)*0.03;
             double y = (rand.nextDouble() * 2 - 1)*0.03;
             incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-            myDB.insertIncident(incident_);
+//            myDB.insertIncident(incident_);
         }
 
         loc = "Redmond";
@@ -118,7 +134,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             double x = (rand.nextDouble() * 2 - 1)*0.03;
             double y = (rand.nextDouble() * 2 - 1)*0.03;
             incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-            myDB.insertIncident(incident_);
+//            myDB.insertIncident(incident_);
         }
     }
 
@@ -152,7 +168,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         mMap.setMyLocationEnabled(true);
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatlng,16));
-        addIncidentsOnMap();
+        new RetrieveFeedTask_().execute(currentLatlng);
+//        addIncidentsOnMap();
     }
 
     public void addIncidentsOnMap() {
@@ -166,6 +183,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             String loc = incident.split(",")[3];
             LatLng latlng = new LatLng(lat,lng);
             switch (type) {
+                case -1:
+                    mMap.addMarker(new MarkerOptions().position(latlng).title("Unknown @"+loc)
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.crisis)));
+                    break;
                 case 0:
                     mMap.addMarker(new MarkerOptions().position(latlng).title("Burglary @"+loc)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.burglary)));
@@ -289,7 +310,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         noti.flags = Notification.FLAG_AUTO_CANCEL;
         NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         nm.notify(0,noti);
+        new RetrieveFeedTask_().execute(currentLatlng);
     }
+
+    public void addIncidents(crime_incident[] crimeList) {
+        ArrayList<String> allIncidents = myDB.getAllIncidents();
+        //System.out.println(allIncidents);
+        myDB.insertIncidentList(crimeList);
+   }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -306,5 +334,64 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    class RetrieveFeedTask_ extends AsyncTask<LatLng, Void, String> {
+
+        private Exception exception;
+        TextView responseView;
+
+        @Override
+        protected String doInBackground(LatLng... latLngs) {
+            String lattitude = Double.toString(latLngs[0].latitude);
+            String longitude = Double.toString(latLngs[0].longitude);
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            Calendar cal = Calendar.getInstance();
+            String dateTo = dateFormat.format(cal.getTime());
+            cal.add(Calendar.DATE, -30);
+            String dateFrom = dateFormat.format(cal.getTime());
+            String radius = "7000";
+            String resourceName = "4h35-4mtu.json";
+            try {
+                URL url = new URL("https://moto.data.socrata.com/resource/"+resourceName+"?$where=within_circle(location,"+
+                        lattitude +"," + longitude + ","+radius+")%20and%20" +
+                        "updated_at%20between%20%27" + dateFrom + "%27%20and%20%27" + dateTo + "%27");
+                System.out.println(url);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                try {
+                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                    StringBuilder stringBuilder = new StringBuilder();
+                    String line;
+                    while ((line = bufferedReader.readLine()) != null) {
+                        stringBuilder.append(line).append("\n");
+                        Log.i("INFO", line);
+
+                    }
+                    bufferedReader.close();
+                    return stringBuilder.toString();
+                }
+                finally{
+                    urlConnection.disconnect();
+                }
+            }
+            catch(Exception e) {
+                Log.e("ERROR", e.getMessage(), e);
+                return null;
+            }
+        }
+
+        protected void onPostExecute(String response) {
+            if(response == null) {
+                response = "THERE WAS AN ERROR";
+            }
+            Log.i("INFO", response);
+            Gson gson = new Gson();
+            Type collectionType = new TypeToken<Collection<crime_incident>>() {}.getType();
+            Collection<crime_incident> enums = gson.fromJson(response,collectionType);
+            crime_incident[] incidentsresponse = enums.toArray(new crime_incident[enums.size()]);
+//            Log.i("INFO", incidentsresponse[0].getCase_number());
+            addIncidents(incidentsresponse);
+            addIncidentsOnMap();
+        }
     }
 }
