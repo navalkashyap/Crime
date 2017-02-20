@@ -263,6 +263,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Address address = addressList.get(0);
         LatLng latlng = new LatLng(address.getLatitude(), address.getLongitude());
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,18));
+        new RetrieveFeedTask_().execute(latlng);
     }
 
     public void changeMapType() {
