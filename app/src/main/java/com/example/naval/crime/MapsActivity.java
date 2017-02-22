@@ -147,6 +147,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onLocationChanged(Location location) {
                 // Called when a new location is found by the network location provider.
                 //newLocationChange(location);
+                currentLatlng = new LatLng(location.getLatitude(), location.getLongitude());
+                new RetrieveFeedTask_().execute(currentLatlng);
+                addIncidentsOnMap();
             }
             public void onStatusChanged(String provider, int status, Bundle extras) {}
             public void onProviderEnabled(String provider) {}
