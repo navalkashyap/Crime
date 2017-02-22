@@ -64,6 +64,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     DBHandler myDB;
     crime_incident incident_;
     public LatLng currentLatlng = null;
+    int minThreshold = 6;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -169,7 +170,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setMyLocationEnabled(true);
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatlng,16));
         new RetrieveFeedTask_().execute(currentLatlng);
-//        addIncidentsOnMap();
+        addIncidentsOnMap();
     }
 
     public void addIncidentsOnMap() {
@@ -264,6 +265,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng latlng = new LatLng(address.getLatitude(), address.getLongitude());
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,18));
         new RetrieveFeedTask_().execute(latlng);
+        addIncidentsOnMap();
     }
 
     public void changeMapType() {
@@ -311,12 +313,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         noti.flags = Notification.FLAG_AUTO_CANCEL;
         NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         nm.notify(0,noti);
-        new RetrieveFeedTask_().execute(currentLatlng);
     }
 
-    public void addIncidents(crime_incident[] crimeList) {
-        ArrayList<String> allIncidents = myDB.getAllIncidents();
-        //System.out.println(allIncidents);
+    public void addIncidentsToDB(crime_incident[] crimeList) {
+//        ArrayList<String> allIncidents = myDB.getAllIncidents();
+//        System.out.println(allIncidents);
         myDB.insertIncidentList(crimeList);
    }
 
@@ -339,8 +340,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     class RetrieveFeedTask_ extends AsyncTask<LatLng, Void, String> {
 
-        private Exception exception;
-        TextView responseView;
+//        private Exception exception;
+//        TextView responseView;
 
         @Override
         protected String doInBackground(LatLng... latLngs) {
@@ -389,10 +390,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Gson gson = new Gson();
             Type collectionType = new TypeToken<Collection<crime_incident>>() {}.getType();
             Collection<crime_incident> enums = gson.fromJson(response,collectionType);
-            crime_incident[] incidentsresponse = enums.toArray(new crime_incident[enums.size()]);
-//            Log.i("INFO", incidentsresponse[0].getCase_number());
-            addIncidents(incidentsresponse);
-            addIncidentsOnMap();
+            crime_incident[] incidentsResponse = enums.toArray(new crime_incident[enums.size()]);
+//          Log.i("INFO", incidentsResponse[0].getCase_number());
+            addIncidentsToDB(incidentsResponse);
+            if(incidentsResponse.length > minThreshold)
+                show_notification();
+
         }
     }
 }
