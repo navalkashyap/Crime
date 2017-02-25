@@ -13,6 +13,8 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
@@ -59,84 +61,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private GoogleMap mMap;
     Toolbar toolbar;
-    ArrayAdapter<String> adapter;
-
-    DBHandler myDB;
-    crime_incident incident_;
-    public LatLng currentLatlng = null;
-    int minThreshold = 6;
+    DBHandler myDB = new DBHandler(this);
+    public LatLng currentLatLng = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        createDB();
         setContentView(R.layout.activity_maps);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("Crime Alert!");
-
-        //toolbar.setNavigationIcon(R.drawable.crimealert);
-        //toolbar.setNavigationContentDescription("Navigation Icon");
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-        ArrayList<String> arraylocation  = myDB.getAllLocations();
-        adapter = new ArrayAdapter<>(MapsActivity.this,android.R.layout.simple_list_item_1,arraylocation);
-        //lv.setAdapter(adapter);
-    }
-
-    public void createDB() {
-        myDB = new DBHandler(this);
-        ArrayList<String> allIncidents = myDB.getAllIncidents();
-        if(allIncidents.size() != 0)
-            return;
-        myDB.clearIncidentTable();
-        double lat = 47.7136844;
-        double lng = -122.2074087;
-        String loc = "Kirkland";
-        for (int i = 0; i < 50; i ++) {
-            Random rand = new Random();
-            double x = (rand.nextDouble() * 2 - 1)*0.5;
-            double y = (rand.nextDouble() * 2 - 1)*0.5;
-            incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-//            myDB.insertIncident(incident_);
-        }
-        loc = "Bothell";
-        lat = 47.759497;
-        lng = -122.190601;
-        for (int i = 0; i < 50; i ++) {
-            Random rand = new Random();
-            double x = (rand.nextDouble() * 2 - 1)*0.03;
-            double y = (rand.nextDouble() * 2 - 1)*0.03;
-            incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-//            myDB.insertIncident(incident_);
-        }
-
-        loc = "Seattle";
-        lat = 47.720323;
-        lng = -122.329173;
-        for (int i = 0; i < 50; i ++) {
-            Random rand = new Random();
-            double x = (rand.nextDouble() * 2 - 1)*0.03;
-            double y = (rand.nextDouble() * 2 - 1)*0.03;
-            incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-//            myDB.insertIncident(incident_);
-        }
-
-        loc = "Redmond";
-        lat = 47.677348;
-        lng = -122.123764;
-        for (int i = 0; i < 20; i ++) {
-            Random rand = new Random();
-            double x = (rand.nextDouble() * 2 - 1)*0.03;
-            double y = (rand.nextDouble() * 2 - 1)*0.03;
-            incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-//            myDB.insertIncident(incident_);
-        }
     }
 
     @Override
@@ -144,111 +81,115 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap = googleMap;
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         LocationListener locationListener = new LocationListener() {
-            public void onLocationChanged(Location location) {
-                // Called when a new location is found by the network location provider.
-                //newLocationChange(location);
-                currentLatlng = new LatLng(location.getLatitude(), location.getLongitude());
-                new RetrieveFeedTask_().execute(currentLatlng);
-                addIncidentsOnMap();
-            }
+            public void onLocationChanged(Location location) {}
             public void onStatusChanged(String provider, int status, Bundle extras) {}
             public void onProviderEnabled(String provider) {}
             public void onProviderDisabled(String provider) {}
         };
 
-        int permissionCheck = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION);
+        int permissionCheck = ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION);
         if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
             Log.d("Network", "Network");
             if (locationManager != null) {
-                Location loc = locationManager
-                        .getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                Location loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                 if(loc != null)
-                    currentLatlng = new LatLng(loc.getLatitude(), loc.getLongitude());
+                    currentLatLng = new LatLng(loc.getLatitude(), loc.getLongitude());
             }
         } else {
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 200);
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},200);
+//            while (true) {
+//                permissionCheck = ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION);
+//                if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+//
+//                    Log.i("INFO", "Got permissions, exiting block loop");
+//                    break;
+//                }
+//                Log.i("INFO", "Sleeping, waiting for permissions");
+//                try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
+//            }
         }
+        // Need to add a wait for user's response
         mMap.setMyLocationEnabled(true);
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatlng,16));
-        new RetrieveFeedTask_().execute(currentLatlng);
-        addIncidentsOnMap();
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng,16));
+        new RetrieveFeedTask().execute(currentLatLng,this,true,mMap);
     }
 
-    public void addIncidentsOnMap() {
+    public void addIncidentsOnMap(DBHandler myDB, GoogleMap mMap) {
         ArrayList<String> allIncidents = myDB.getAllIncidents();
+        if(allIncidents.size() == 0)
+            return;
         for (int i = 0; i < allIncidents.size(); i++) {
             String incident = allIncidents.get(i);
             System.out.println(incident);
-            double lat = Double.parseDouble(incident.split(",")[1]);
-            double lng = Double.parseDouble(incident.split(",")[2]);
-            int type = Integer.parseInt(incident.split(",")[4]);
-            String loc = incident.split(",")[3];
+            double lat = Double.parseDouble(incident.split(";")[1]);
+            double lng = Double.parseDouble(incident.split(";")[2]);
+            int type = Integer.parseInt(incident.split(";")[4]);
+            String description = incident.split(";")[3];
             LatLng latlng = new LatLng(lat,lng);
             switch (type) {
                 case -1:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Unknown @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.crisis)));
                     break;
                 case 0:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Burglary @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.burglary)));
                     break;
                 case 1:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Car Prowl @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.carprowl)));
                     break;
                 case 2:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Collision @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.collision)));
                     break;
                 case 3:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Crisis @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.crisis)));
                     break;
                 case 4:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Disturbance @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.disturbance)));
                     break;
                 case 5:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("False Alarm @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.falsealarm)));
                     break;
                 case 6:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Fire Inactive @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.fireinactive)));
                     break;
                 case 7:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Liquor @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.liquor)));
                     break;
                 case 8:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Narcotics @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.narcotics)));
                     break;
                 case 9:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Suspicious @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.suspicious)));
                     break;
                 case 10:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Threats @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.threats)));
                     break;
                 case 11:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Traffic @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.traffic)));
                     break;
                 case 12:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Unsafe @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.unsafe)));
                     break;
                 case 13:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Weapon @"+loc)
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description)
                             .icon(BitmapDescriptorFactory.fromResource(R.drawable.weapon)));
                     break;
                 default:
-                    mMap.addMarker(new MarkerOptions().position(latlng).title("Incident @"+loc));
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(description));
                     break;
             }
         }
@@ -267,8 +208,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         Address address = addressList.get(0);
         LatLng latlng = new LatLng(address.getLatitude(), address.getLongitude());
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,18));
-        new RetrieveFeedTask_().execute(latlng);
-        addIncidentsOnMap();
+        myDB.deleteAllIncident();
+        new RetrieveFeedTask().execute(latlng,this,true,mMap);
     }
 
     public void changeMapType() {
@@ -304,25 +245,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return true;
     }
 
-    public void show_notification() {
+    public void show_notification(Context context) {
         Intent intent = new Intent();
-        PendingIntent pIntent = PendingIntent.getActivity(MapsActivity.this,0,intent,0);
+        PendingIntent pIntent = PendingIntent.getActivity(context,0,intent,0);
+        Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        if(alarmSound == null){
+            alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        }
         Notification noti = new Notification.Builder(MapsActivity.this)
                 .setTicker("TickerTitle")
                 .setContentTitle("Warning!")
                 .setContentText("You have reached a crime-prone area.Please be cautious!")
                 .setSmallIcon(R.drawable.crimealert)
+                .setSound(alarmSound)
                 .setContentIntent(pIntent).getNotification();
         noti.flags = Notification.FLAG_AUTO_CANCEL;
         NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         nm.notify(0,noti);
     }
-
-    public void addIncidentsToDB(crime_incident[] crimeList) {
-//        ArrayList<String> allIncidents = myDB.getAllIncidents();
-//        System.out.println(allIncidents);
-        myDB.insertIncidentList(crimeList);
-   }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -335,70 +275,16 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 changeMapType();
                 break;
             case R.id.show_notification:
-                show_notification();
+                show_notification(MapsActivity.this);
+                break;
+            case R.id.show_DBinfo:
+                myDB.deleteAllIncident();
+                break;
+            case R.id.getCount:
+                Toast.makeText(MapsActivity.this, "DB count " + myDB.getCount(), Toast.LENGTH_SHORT).show();
                 break;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    class RetrieveFeedTask_ extends AsyncTask<LatLng, Void, String> {
-
-//        private Exception exception;
-//        TextView responseView;
-
-        @Override
-        protected String doInBackground(LatLng... latLngs) {
-            String lattitude = Double.toString(latLngs[0].latitude);
-            String longitude = Double.toString(latLngs[0].longitude);
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-            Calendar cal = Calendar.getInstance();
-            String dateTo = dateFormat.format(cal.getTime());
-            cal.add(Calendar.DATE, -30);
-            String dateFrom = dateFormat.format(cal.getTime());
-            String radius = "7000";
-            String resourceName = "4h35-4mtu.json";
-            try {
-                URL url = new URL("https://moto.data.socrata.com/resource/"+resourceName+"?$where=within_circle(location,"+
-                        lattitude +"," + longitude + ","+radius+")%20and%20" +
-                        "updated_at%20between%20%27" + dateFrom + "%27%20and%20%27" + dateTo + "%27");
-                System.out.println(url);
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                try {
-                    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                    StringBuilder stringBuilder = new StringBuilder();
-                    String line;
-                    while ((line = bufferedReader.readLine()) != null) {
-                        stringBuilder.append(line).append("\n");
-                        Log.i("INFO", line);
-
-                    }
-                    bufferedReader.close();
-                    return stringBuilder.toString();
-                }
-                finally{
-                    urlConnection.disconnect();
-                }
-            }
-            catch(Exception e) {
-                Log.e("ERROR", e.getMessage(), e);
-                return null;
-            }
-        }
-
-        protected void onPostExecute(String response) {
-            if(response == null) {
-                response = "THERE WAS AN ERROR";
-            }
-            Log.i("INFO", response);
-            Gson gson = new Gson();
-            Type collectionType = new TypeToken<Collection<crime_incident>>() {}.getType();
-            Collection<crime_incident> enums = gson.fromJson(response,collectionType);
-            crime_incident[] incidentsResponse = enums.toArray(new crime_incident[enums.size()]);
-//          Log.i("INFO", incidentsResponse[0].getCase_number());
-            addIncidentsToDB(incidentsResponse);
-            if(incidentsResponse.length > minThreshold)
-                show_notification();
-
-        }
-    }
 }

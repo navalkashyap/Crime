@@ -25,4 +25,14 @@
         android:orderInCategory="100"
         app:showAsAction="never"/>
 
+    <item android:id="@+id/show_DBinfo"
+        android:title="Delete DB"
+        android:orderInCategory="100"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/getCount"
+        android:title="Get Count"
+        android:orderInCategory="100"
+        app:showAsAction="never"/>
+
 </menu>
