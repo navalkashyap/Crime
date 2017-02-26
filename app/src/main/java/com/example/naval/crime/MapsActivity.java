@@ -19,6 +19,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Vibrator;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -40,6 +41,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.lang.Thread.sleep;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -78,11 +81,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-/*
 
         // Start Location service
-        startService(new Intent(this, LocationService.class));
-*/
+//        startService(new Intent(this, LocationService.class));
 
         // bind to Location service
         Log.i(TAG, "Call to enable binding with Location Service.");
@@ -120,7 +121,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 {
                     currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                     previousLocation = location;
-                    new RetrieveFeedTask().execute(currentLatLng, MapsActivity.this, false, mMap);
+                    new RetrieveFeedTask().execute(currentLatLng, MapsActivity.this, true, mMap);
                 }
             }
             public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -170,7 +171,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     break;
                 case 1:
                     mMap.addMarker(new MarkerOptions().position(latlng).title(description)
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.carprowl)));
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.weapon)));
                     break;
                 case 2:
                     mMap.addMarker(new MarkerOptions().position(latlng).title(description)
@@ -190,7 +191,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     break;
                 case 6:
                     mMap.addMarker(new MarkerOptions().position(latlng).title(description)
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.fireinactive)));
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.carprowl)));
                     break;
                 case 7:
                     mMap.addMarker(new MarkerOptions().position(latlng).title(description)
@@ -218,7 +219,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     break;
                 case 13:
                     mMap.addMarker(new MarkerOptions().position(latlng).title(description)
-                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.weapon)));
+                            .icon(BitmapDescriptorFactory.fromResource(R.drawable.fireinactive)));
                     break;
                 default:
                     mMap.addMarker(new MarkerOptions().position(latlng).title(description));
@@ -241,7 +242,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng latlng = new LatLng(address.getLatitude(), address.getLongitude());
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,18));
         myDB.deleteAllIncident();
-        new RetrieveFeedTask().execute(latlng,this,false,mMap);
+        new RetrieveFeedTask().execute(latlng,this,true,mMap);
+
     }
 
     public void changeMapType() {
@@ -284,14 +286,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if(alarmSound == null){
             alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
         }
+//        Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+//        long[] pattern = { 0, 100, 600, 100, 700};
+//        vibrator.vibrate(pattern, -1);
         Notification noti = new Notification.Builder(context)
                 .setTicker("TickerTitle")
                 .setContentTitle("Warning!")
                 .setContentText("You have reached a crime-prone area.Please be cautious!")
                 .setSmallIcon(R.drawable.crimealert)
                 .setSound(alarmSound)
+
                 .setContentIntent(pIntent).getNotification();
-        noti.flags = Notification.FLAG_AUTO_CANCEL;
+        noti.flags |= Notification.FLAG_AUTO_CANCEL;
         // Get the notification manager system service
         NotificationManager nm = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
         nm.notify(0,noti);

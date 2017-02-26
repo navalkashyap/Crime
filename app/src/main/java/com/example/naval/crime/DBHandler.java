@@ -6,10 +6,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 public class DBHandler extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 6;
@@ -50,21 +48,26 @@ public class DBHandler extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    // Add new row in DB
-    public boolean insertIncident(crime_incident incident_) {
+
+    public boolean insertIncidentList_bothell(WoodRed_incident[] incidentsList) {
         ContentValues values = new ContentValues();
         SQLiteDatabase db = this.getWritableDatabase();
-        values.put(incidentType, incident_.getIncidentType());
-        values.put(latitude,Double.toString(incident_.getLatitude()));
-        values.put(longitude,Double.toString(incident_.getLongitude()));
-        values.put(incidentTime,incident_.getIncidentTime());
-        values.put(description, "Dummy_Value");
-        db.insert(TABLE_PRODUCTS, null, values);
+        for (int i = 0; i< incidentsList.length; i++) {
+            values.put(incidentTime,incidentsList[i].getIncident_datetime());
+            values.put(caseNum, Long.valueOf(incidentsList[i].getCase_number().substring(1)));
+            values.put(description, String.valueOf(incidentsList[i].getIncident_description()));
+            values.put(incidentType, incidentsList[i].getIncident_type_primary());
+            values.put(latitude,incidentsList[i].getLatitude());
+            values.put(longitude,incidentsList[i].getLongitude());
+            System.out.println(values);
+            db.insertWithOnConflict(TABLE_PRODUCTS, null, values,SQLiteDatabase.CONFLICT_REPLACE);
+//            db.insert(TABLE_PRODUCTS, null, values);
+        }
         db.close();
         return true;
     }
 
-    public boolean insertIncidentList(new_crime_incident[] incidentsList) {
+    public boolean insertIncidentList(Seattle_incident[] incidentsList) {
         ContentValues values = new ContentValues();
         SQLiteDatabase db = this.getWritableDatabase();
         for (int i = 0; i< incidentsList.length; i++) {
@@ -78,13 +81,6 @@ public class DBHandler extends SQLiteOpenHelper {
             db.insertWithOnConflict(TABLE_PRODUCTS, null, values,SQLiteDatabase.CONFLICT_REPLACE);
 //            db.insert(TABLE_PRODUCTS, null, values);
         }
-        db.close();
-        return true;
-    }
-    // Delete a row from DB
-    public boolean deleteIncident(Integer id) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_PRODUCTS, "_id = ? ",new String[] {Integer.toString(id)});
         db.close();
         return true;
     }
@@ -191,69 +187,6 @@ public class DBHandler extends SQLiteOpenHelper {
 
 
         return -1;
-    }
-
-    public ArrayList<String> getAllLocations() {
-        ArrayList<String> array_list = new ArrayList<String>();
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor res =  db.rawQuery( "SELECT * FROM " + TABLE_PRODUCTS, null );
-        res.moveToFirst();
-
-        while(res.isAfterLast() == false){
-            array_list.add(res.getString(res.getColumnIndex(location)));
-            res.moveToNext();
-        }
-        return array_list;
-    }
-
-    public void createDummyDB() {
-        crime_incident incident_;
-        ArrayList<String> allIncidents = getAllIncidents();
-        if(allIncidents.size() != 0)
-            return;
-        clearIncidentTable();
-        double lat = 47.7136844;
-        double lng = -122.2074087;
-        String loc = "Kirkland";
-        for (int i = 0; i < 50; i ++) {
-            Random rand = new Random();
-            double x = (rand.nextDouble() * 2 - 1)*0.5;
-            double y = (rand.nextDouble() * 2 - 1)*0.5;
-            incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-//            myDB.insertIncident(incident_);
-        }
-        loc = "Bothell";
-        lat = 47.759497;
-        lng = -122.190601;
-        for (int i = 0; i < 50; i ++) {
-            Random rand = new Random();
-            double x = (rand.nextDouble() * 2 - 1)*0.03;
-            double y = (rand.nextDouble() * 2 - 1)*0.03;
-            incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-//            myDB.insertIncident(incident_);
-        }
-
-        loc = "Seattle";
-        lat = 47.720323;
-        lng = -122.329173;
-        for (int i = 0; i < 50; i ++) {
-            Random rand = new Random();
-            double x = (rand.nextDouble() * 2 - 1)*0.03;
-            double y = (rand.nextDouble() * 2 - 1)*0.03;
-            incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-//            myDB.insertIncident(incident_);
-        }
-
-        loc = "Redmond";
-        lat = 47.677348;
-        lng = -122.123764;
-        for (int i = 0; i < 20; i ++) {
-            Random rand = new Random();
-            double x = (rand.nextDouble() * 2 - 1)*0.03;
-            double y = (rand.nextDouble() * 2 - 1)*0.03;
-            incident_ = new crime_incident(2, rand.nextInt(12), lat + x , lng + y, 1001, loc, 2);
-//            myDB.insertIncident(incident_);
-        }
     }
 
 }

@@ -4,7 +4,7 @@ package com.example.naval.crime;
  * Created by navalkashyap on 2/24/2017.
  */
 
-public class new_crime_incident {
+public class Seattle_incident {
 
 
     /**
