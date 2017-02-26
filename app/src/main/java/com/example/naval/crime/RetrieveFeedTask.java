@@ -6,20 +6,18 @@ import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
-import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 
 class RetrieveFeedTask extends AsyncTask<Object, Void, String> {
@@ -102,5 +100,7 @@ class RetrieveFeedTask extends AsyncTask<Object, Void, String> {
         mapDB.insertIncidentList(incidentsResponse);
         if(addInicdentsOnMap)
             new MapsActivity().addIncidentsOnMap(mapDB,mMap);
+        else
+            new MapsActivity().show_notification(mapContext);
     }
 }
