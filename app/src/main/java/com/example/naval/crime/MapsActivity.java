@@ -5,8 +5,10 @@ import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -15,22 +17,17 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.AsyncTask;
-import android.support.v4.app.ActivityCompat;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.ActionMode;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
 import android.widget.SearchView;
-import android.widget.TextView;
 import android.widget.Toast;
-
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -39,23 +36,10 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
 import java.util.List;
-import java.util.Random;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -64,9 +48,48 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     DBHandler myDB = new DBHandler(this);
     public LatLng currentLatLng = new LatLng(47.7136844,-122.2074087);
 
+    // TAG for maps activity
+    private final static String TAG = "Maps Activity";
+
+    // previous location
+    private Location previousLocation = null;
+
+    // Service reference
+    private LocationService locationService;
+
+    // check whether the service is bound
+    private boolean isServiceBound;
+
+    // Set up Service Connection
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            locationService = ((LocationService.LocationBinder) service).getService();
+            isServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            locationService = null;
+            isServiceBound = false;
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+/*
+
+        // Start Location service
+        startService(new Intent(this, LocationService.class));
+*/
+
+        // bind to Location service
+        Log.i(TAG, "Call to enable binding with Location Service.");
+        if(!isServiceBound){
+            bindService(new Intent(this, LocationService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+        }
+
         setContentView(R.layout.activity_maps);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -77,19 +100,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
+    public void onDestroy()
+    {
+        super.onDestroy();;
+
+        Log.i(TAG, "Unbind from Location Service");
+        if(isServiceBound){
+            unbindService(serviceConnection);
+            isServiceBound = false;
+        }
+    }
+
+    @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         LocationListener locationListener = new LocationListener() {
-            public void onLocationChanged(Location location) {}
+            public void onLocationChanged(Location location) {
+                if(isServiceBound && locationService.isBetterLocation(location, previousLocation))
+                {
+                    currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+                    previousLocation = location;
+                    new RetrieveFeedTask().execute(currentLatLng, MapsActivity.this, false, mMap);
+                }
+            }
             public void onStatusChanged(String provider, int status, Bundle extras) {}
             public void onProviderEnabled(String provider) {}
             public void onProviderDisabled(String provider) {}
         };
 
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         int permissionCheck = ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION);
         if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, locationListener);
             Log.d("Network", "Network");
             if (locationManager != null) {
                 Location loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -102,7 +144,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         // Need to add a wait for user's response
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng,16));
-        new RetrieveFeedTask().execute(currentLatLng,this,true,mMap);
+        new RetrieveFeedTask().execute(currentLatLng, MapsActivity.this,true,mMap);
     }
 
     public void addIncidentsOnMap(DBHandler myDB, GoogleMap mMap) {
@@ -199,7 +241,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng latlng = new LatLng(address.getLatitude(), address.getLongitude());
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,18));
         myDB.deleteAllIncident();
-        new RetrieveFeedTask().execute(latlng,this,true,mMap);
+        new RetrieveFeedTask().execute(latlng,this,false,mMap);
     }
 
     public void changeMapType() {
@@ -242,7 +284,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         if(alarmSound == null){
             alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
         }
-        Notification noti = new Notification.Builder(MapsActivity.this)
+        Notification noti = new Notification.Builder(context)
                 .setTicker("TickerTitle")
                 .setContentTitle("Warning!")
                 .setContentText("You have reached a crime-prone area.Please be cautious!")
@@ -250,7 +292,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .setSound(alarmSound)
                 .setContentIntent(pIntent).getNotification();
         noti.flags = Notification.FLAG_AUTO_CANCEL;
-        NotificationManager nm = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        // Get the notification manager system service
+        NotificationManager nm = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
         nm.notify(0,noti);
     }
 
