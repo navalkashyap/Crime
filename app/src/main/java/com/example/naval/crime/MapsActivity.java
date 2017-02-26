@@ -62,7 +62,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleMap mMap;
     Toolbar toolbar;
     DBHandler myDB = new DBHandler(this);
-    public LatLng currentLatLng = null;
+    public LatLng currentLatLng = new LatLng(47.7136844,-122.2074087);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,21 +96,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if(loc != null)
                     currentLatLng = new LatLng(loc.getLatitude(), loc.getLongitude());
             }
+            mMap.setMyLocationEnabled(true);
         } else {
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},200);
-//            while (true) {
-//                permissionCheck = ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION);
-//                if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-//
-//                    Log.i("INFO", "Got permissions, exiting block loop");
-//                    break;
-//                }
-//                Log.i("INFO", "Sleeping, waiting for permissions");
-//                try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
-//            }
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 200);
         }
         // Need to add a wait for user's response
-        mMap.setMyLocationEnabled(true);
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng,16));
         new RetrieveFeedTask().execute(currentLatLng,this,true,mMap);
     }

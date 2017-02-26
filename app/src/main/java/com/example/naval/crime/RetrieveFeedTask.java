@@ -10,6 +10,7 @@ import com.google.android.gms.maps.model.LatLng;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.DateFormat;
@@ -36,6 +37,18 @@ class RetrieveFeedTask extends AsyncTask<Object, Void, String> {
         addInicdentsOnMap = (boolean) params[2];
         mMap = (GoogleMap) params[3];
         mapDB = new DBHandler(mapContext);
+//        LatLng Seattle_latlng = new LatLng(47.766790, -122.202505);
+//        System.out.println("Distance between "+getDistance(latlngs,Seattle_latlng));
+        return seattle_api(latlngs);
+    }
+
+    double getDistance(LatLng x, LatLng y) {
+        double sq_dist = Math.pow((x.latitude - y.latitude),2) + Math.pow((x.longitude - y.longitude),2);
+        double dist = Math.pow(sq_dist, 0.5);
+        return dist;
+    }
+
+    String seattle_api(LatLng latlngs) {
         String latitude = Double.toString(latlngs.latitude);
         String longitude = Double.toString(latlngs.longitude);
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
