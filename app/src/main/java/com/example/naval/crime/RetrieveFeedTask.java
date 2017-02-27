@@ -27,6 +27,7 @@ class RetrieveFeedTask extends AsyncTask<Object, Void, String> {
     Context mapContext;
     int minThreshold = 10;
     boolean addInicdentsOnMap = false;
+    boolean sendNotifcation = true;
 
     @Override
     protected String doInBackground(Object... params) {
@@ -34,6 +35,7 @@ class RetrieveFeedTask extends AsyncTask<Object, Void, String> {
         mapContext = (Context) params[1];
         addInicdentsOnMap = (boolean) params[2];
         mMap = (GoogleMap) params[3];
+        sendNotifcation = (boolean) params[4];
         mapDB = new DBHandler(mapContext);
 //        LatLng Seattle_latlng = new LatLng(47.766790, -122.202505);
 //        System.out.println("Distance between "+getDistance(latlngs,Seattle_latlng));
@@ -55,7 +57,7 @@ class RetrieveFeedTask extends AsyncTask<Object, Void, String> {
         String dateTo = dateFormat.format(cal.getTime());
         cal.add(Calendar.DATE, -15);
         String dateFrom = dateFormat.format(cal.getTime());
-        String circle = "10000";
+        String circle = "50000";
         try {
             URL url_bothell = new URL("https://moto.data.socrata.com/resource/4h35-4mtu.json?" +
                     "$select=case_number,incident_type_primary,incident_datetime,latitude,longitude,incident_description&" +
@@ -97,9 +99,9 @@ class RetrieveFeedTask extends AsyncTask<Object, Void, String> {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         Calendar cal = Calendar.getInstance();
         String dateTo = dateFormat.format(cal.getTime());
-        cal.add(Calendar.DATE, -7);
+        cal.add(Calendar.HOUR, -6);
         String dateFrom = dateFormat.format(cal.getTime());
-        String circle = "500";
+        String circle = "50000";
         try {
             URL url_seattle = new URL("https://data.seattle.gov/resource/pu5n-trf4.json?" +
                     "$select=cad_event_number,initial_type_group,at_scene_time,latitude,longitude,initial_type_description&" +
@@ -142,7 +144,7 @@ class RetrieveFeedTask extends AsyncTask<Object, Void, String> {
         mapDB.insertIncidentList(incidentsResponse);
         if(addInicdentsOnMap)
             new MapsActivity().addIncidentsOnMap(mapDB,mMap);
-        if (minThreshold < incidentsResponse.length)
+        if (minThreshold < incidentsResponse.length & sendNotifcation)
             new MapsActivity().show_notification(mapContext);
     }
 }

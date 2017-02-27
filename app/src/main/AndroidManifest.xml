@@ -37,8 +37,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".callAPI"></activity>
-        <service android:name=".LocationService" android:enabled="true"/>
+        <service android:name=".LocationService" android:enabled="true" android:exported="false"/>
+        <service android:name=".CrimeAlertService" android:enabled="true" android:exported="false"/>
     </application>
 
 </manifest>

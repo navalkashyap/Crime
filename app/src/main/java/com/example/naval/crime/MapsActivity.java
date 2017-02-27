@@ -81,7 +81,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        int permissionCheck = ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION);
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 200);
+        }
         // Start Location service
 //        startService(new Intent(this, LocationService.class));
 
@@ -98,18 +101,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        startCrimeAlertService();
     }
 
     @Override
     public void onDestroy()
     {
-        super.onDestroy();;
+        super.onDestroy();
 
         Log.i(TAG, "Unbind from Location Service");
         if(isServiceBound){
             unbindService(serviceConnection);
             isServiceBound = false;
         }
+    }
+
+    public void startCrimeAlertService() {
+        Intent intent = new Intent(this,CrimeAlertService.class);
+        startService(intent);
     }
 
     @Override
@@ -121,7 +130,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 {
                     currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
                     previousLocation = location;
-                    new RetrieveFeedTask().execute(currentLatLng, MapsActivity.this, true, mMap);
+                    new RetrieveFeedTask().execute(currentLatLng, MapsActivity.this, true, mMap,true);
                 }
             }
             public void onStatusChanged(String provider, int status, Bundle extras) {}
@@ -145,7 +154,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         // Need to add a wait for user's response
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng,16));
-        new RetrieveFeedTask().execute(currentLatLng, MapsActivity.this,true,mMap);
+        new RetrieveFeedTask().execute(currentLatLng, MapsActivity.this,true,mMap,true);
     }
 
     public void addIncidentsOnMap(DBHandler myDB, GoogleMap mMap) {
@@ -242,9 +251,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng latlng = new LatLng(address.getLatitude(), address.getLongitude());
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,18));
         myDB.deleteAllIncident();
-        new RetrieveFeedTask().execute(latlng,this,true,mMap);
+     //   new RetrieveFeedTask().execute(latlng,this,true,mMap,false);
 
     }
+
 
     public void changeMapType() {
         if(mMap.getMapType() == GoogleMap.MAP_TYPE_NORMAL) {
