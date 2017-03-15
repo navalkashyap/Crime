@@ -59,7 +59,7 @@ public class DBHandler extends SQLiteOpenHelper {
             values.put(incidentType, incidentsList[i].getIncident_type_primary());
             values.put(latitude,incidentsList[i].getLatitude());
             values.put(longitude,incidentsList[i].getLongitude());
-            System.out.println(values);
+//            System.out.println(values);
             db.insertWithOnConflict(TABLE_PRODUCTS, null, values,SQLiteDatabase.CONFLICT_REPLACE);
 //            db.insert(TABLE_PRODUCTS, null, values);
         }
@@ -77,7 +77,7 @@ public class DBHandler extends SQLiteOpenHelper {
             values.put(incidentType, incidentsList[i].getInitial_type_group());
             values.put(latitude,incidentsList[i].getLatitude());
             values.put(longitude,incidentsList[i].getLongitude());
-            System.out.println(values);
+//            System.out.println(values);
             db.insertWithOnConflict(TABLE_PRODUCTS, null, values,SQLiteDatabase.CONFLICT_REPLACE);
 //            db.insert(TABLE_PRODUCTS, null, values);
         }
@@ -118,15 +118,15 @@ public class DBHandler extends SQLiteOpenHelper {
         if(res.getCount() == 0)
             return array_list;
         res.moveToFirst();
-        System.out.println("getAllIncidents - res.moveToFirst "+ res.getCount() + " " +
-        res.getString(res.getColumnIndex(caseNum)));
+//        System.out.println("getAllIncidents - res.moveToFirst "+ res.getCount() + " " +
+//        res.getString(res.getColumnIndex(caseNum)));
         while(res.isAfterLast() == false){
             incident_ = res.getString(res.getColumnIndex(caseNum))
                     + ";" + res.getString(res.getColumnIndex(latitude))
                     + ";" + res.getString(res.getColumnIndex(longitude))
                     + ";" + res.getString(res.getColumnIndex(description))
                     + ";" + getIncidentType(res.getString(res.getColumnIndex(incidentType)));
-            System.out.println(incident_);
+//            System.out.println(incident_);
             array_list.add(incident_);
             res.moveToNext();
         }

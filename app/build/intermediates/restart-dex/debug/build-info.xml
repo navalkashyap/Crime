@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<instant-run
+    abi="armeabi-v7a,armeabi"
+    api-level="24"
+    density="560dpi"
+    format="8"
+    plugin-version="2.2.3"
+    timestamp="469000216542570"
+    token="3924618424359289958"
+    verifier="COMPATIBLE" >
+
+    <task
+        name="javac"
+        duration="393" />
+    <task
+        name="instant-run-dex"
+        duration="45" />
+    <task
+        name="instant-run-transform"
+        duration="84" />
+    <task
+        name="verifier"
+        duration="3" />
+
+    <artifact
+        location="C:\Users\naval_\AndroidStudioProjects\Crime\app\build\intermediates\reload-dex\debug\classes.dex"
+        type="RELOAD_DEX" />
+
+    <build
+        timestamp="468886699893375"
+        verifier="FULL_BUILD_REQUESTED" >
+        <artifact
+            location="C:\Users\naval_\AndroidStudioProjects\Crime\app\build\outputs\apk\app-debug.apk"
+            type="MAIN" />
+    </build>
+    <build
+        timestamp="468928894967758"
+        verifier="COMPATIBLE" >
+        <artifact
+            location="C:\Users\naval_\AndroidStudioProjects\Crime\app\build\intermediates\builds\debug\468928894967758\classes.dex"
+            type="RELOAD_DEX" />
+    </build>
+    <build
+        timestamp="468969519425518"
+        verifier="COMPATIBLE" >
+        <artifact
+            location="C:\Users\naval_\AndroidStudioProjects\Crime\app\build\intermediates\builds\debug\468969519425518\classes.dex"
+            type="RELOAD_DEX" />
+    </build>
+    <build
+        timestamp="469000216542570"
+        verifier="COMPATIBLE" >
+        <artifact
+            location="C:\Users\naval_\AndroidStudioProjects\Crime\app\build\intermediates\reload-dex\debug\classes.dex"
+            type="RELOAD_DEX" />
+    </build>
+
+</instant-run>

@@ -39,7 +39,8 @@ class RetrieveFeedTask extends AsyncTask<Object, Void, String> {
         mapDB = new DBHandler(mapContext);
 //        LatLng Seattle_latlng = new LatLng(47.766790, -122.202505);
 //        System.out.println("Distance between "+getDistance(latlngs,Seattle_latlng));
-        System.out.println(bothell_api(latlngs));
+//        System.out.println();
+        bothell_api(latlngs);
         return seattle_api(latlngs);
     }
 
@@ -144,7 +145,7 @@ class RetrieveFeedTask extends AsyncTask<Object, Void, String> {
         mapDB.insertIncidentList(incidentsResponse);
         if(addInicdentsOnMap)
             new MapsActivity().addIncidentsOnMap(mapDB,mMap);
-        if (minThreshold < incidentsResponse.length & sendNotifcation)
-            new MapsActivity().show_notification(mapContext);
+//        if (minThreshold < incidentsResponse.length && sendNotifcation)
+//            new MapsActivity().show_notification(mapContext);
     }
 }

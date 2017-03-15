@@ -141,7 +141,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         int permissionCheck = ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION);
         if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000, 0, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 50000, 0, locationListener);
             Log.d("Network", "Network");
             if (locationManager != null) {
                 Location loc = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
@@ -153,7 +153,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 200);
         }
         // Need to add a wait for user's response
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng,16));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng,15));
         new RetrieveFeedTask().execute(currentLatLng, MapsActivity.this,true,mMap,true);
     }
 
@@ -249,7 +249,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         Address address = addressList.get(0);
         LatLng latlng = new LatLng(address.getLatitude(), address.getLongitude());
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,18));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng,15));
         myDB.deleteAllIncident();
      //   new RetrieveFeedTask().execute(latlng,this,true,mMap,false);
 
@@ -317,21 +317,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id){
-            case R.id.action_settings:
-                Toast.makeText(MapsActivity.this, "Settings clicked", Toast.LENGTH_SHORT).show();
-                break;
+//            case R.id.action_settings:
+//                Toast.makeText(MapsActivity.this, "Settings clicked", Toast.LENGTH_SHORT).show();
+//                break;
             case R.id.action_mapType:
                 changeMapType();
                 break;
             case R.id.show_notification:
                 show_notification(MapsActivity.this);
                 break;
-            case R.id.show_DBinfo:
-                myDB.deleteAllIncident();
-                break;
-            case R.id.getCount:
-                Toast.makeText(MapsActivity.this, "DB count " + myDB.getCount(), Toast.LENGTH_SHORT).show();
-                break;
+//            case R.id.show_DBinfo:
+//                myDB.deleteAllIncident();
+//                break;
+//            case R.id.getCount:
+//                Toast.makeText(MapsActivity.this, "DB count " + myDB.getCount(), Toast.LENGTH_SHORT).show();
+//                break;
         }
         return super.onOptionsItemSelected(item);
     }

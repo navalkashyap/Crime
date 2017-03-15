@@ -1,0 +1,7 @@
+#Wed Mar 01 18:42:06 PST 2017
+base.0=C\:\\Users\\naval_\\AndroidStudioProjects\\Crime\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\10\\instant-run_4b4619dd835ce068fa76f89b6bef5fa48dcbadda
+renamed.1=classes.dex
+renamed.0=classes2.dex
+file.1=C\:\\Users\\naval_\\AndroidStudioProjects\\Crime\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\10\\instant-run-bootstrap_6a43140e7a70628c2b9a9c2785c1dfd6268dd8c6\\classes.dex
+base.1=C\:\\Users\\naval_\\AndroidStudioProjects\\Crime\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\10\\instant-run-bootstrap_6a43140e7a70628c2b9a9c2785c1dfd6268dd8c6
+file.0=C\:\\Users\\naval_\\AndroidStudioProjects\\Crime\\app\\build\\intermediates\\transforms\\dex\\debug\\folders\\1000\\10\\instant-run_4b4619dd835ce068fa76f89b6bef5fa48dcbadda\\classes.dex
